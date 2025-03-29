@@ -10,7 +10,7 @@ export interface Transaction {
   recurring_period?: 'daily' | 'weekly' | 'monthly' | 'yearly';
   installment_current?: number;
   installment_total?: number;
-  account_id?: string;
+  account_id?: string;  // Added account_id that was missing
   user_id?: string;
   due_date?: string;  // Data de vencimento
   payment_status?: 'pending' | 'paid' | 'overdue';  // Status de pagamento
@@ -36,7 +36,7 @@ export interface Account {
   id: string;
   name: string;
   balance: number;
-  type: 'checking' | 'savings' | 'credit_card' | 'investment' | 'other';
+  type: string; // Changed from enum to string to match the actual data
   color?: string;
 }
 

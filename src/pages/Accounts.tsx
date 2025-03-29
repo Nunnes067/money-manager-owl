@@ -132,7 +132,7 @@ const Accounts = () => {
           </div>
         ) : (
           <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
-            {accounts.map((account: Account) => (
+            {accounts.map((account: any) => (
               <Card key={account.id} className="transition-shadow hover:shadow-md">
                 <CardHeader className="pb-2 flex flex-row items-center justify-between">
                   <div className="flex items-center space-x-3">

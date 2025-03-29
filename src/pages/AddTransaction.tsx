@@ -229,7 +229,7 @@ const AddTransaction = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {accounts.map((account: Account) => (
+                        {accounts.map((account: any) => (
                           <SelectItem key={account.id} value={account.id}>{account.name}</SelectItem>
                         ))}
                       </SelectContent>

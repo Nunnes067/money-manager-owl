@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { ArrowLeft, Loader2 } from 'lucide-react';
@@ -74,7 +73,6 @@ const EditTransaction = () => {
     },
   });
 
-  // Atualizar o formulário quando os dados da transação forem carregados
   useEffect(() => {
     if (transaction) {
       form.setValue('description', transaction.description);
@@ -83,7 +81,9 @@ const EditTransaction = () => {
       form.setValue('category', transaction.category || '');
       form.setValue('account_id', transaction.account_id || '');
       form.setValue('is_recurring', transaction.is_recurring || false);
-      form.setValue('recurring_period', transaction.recurring_period);
+      if (transaction.recurring_period && ['daily', 'weekly', 'monthly', 'yearly'].includes(transaction.recurring_period)) {
+        form.setValue('recurring_period', transaction.recurring_period as 'daily' | 'weekly' | 'monthly' | 'yearly');
+      }
       form.setValue('date', new Date(transaction.date).toISOString().split('T')[0]);
     }
   }, [transaction, form]);
@@ -258,7 +258,7 @@ const EditTransaction = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {accounts.map((account: Account) => (
+                        {accounts.map((account: any) => (
                           <SelectItem key={account.id} value={account.id}>{account.name}</SelectItem>
                         ))}
                       </SelectContent>
@@ -283,7 +283,6 @@ const EditTransaction = () => {
                       <SelectContent>
                         {categories
                           .filter((cat: Category) => 
-                            // Filtrar categorias de acordo com o tipo de transação
                             (watchType === "income" && ["Salário", "Investimentos"].includes(cat.name)) ||
                             (watchType === "expense" && !["Salário", "Investimentos"].includes(cat.name))
                           )
