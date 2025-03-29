@@ -3,7 +3,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { Wallet, PieChart, Settings, Plus, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, NavigateFunction } from 'react-router-dom';
 
 interface NavItemProps {
   icon: React.ReactNode;
@@ -34,15 +34,34 @@ interface DashboardLayoutProps {
 }
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const currentPath = location.pathname;
+  // Use try-catch to handle the case when not inside a Router context
+  let navigate: NavigateFunction | undefined;
+  let currentPath = '/';
+  
+  try {
+    navigate = useNavigate();
+    currentPath = useLocation().pathname;
+  } catch (error) {
+    console.warn('Router context not available:', error);
+    // Provide fallback navigation function
+    navigate = (path: string) => {
+      console.warn(`Navigation attempted to ${path}, but Router is not available`);
+      // If we need to force navigation without the router, we can use:
+      window.location.href = path;
+    };
+  }
 
   const navItems = [
     { icon: <DollarSign className="h-4 w-4" />, label: "Transações", path: "/" },
     { icon: <PieChart className="h-4 w-4" />, label: "Relatórios", path: "/reports" },
     { icon: <Settings className="h-4 w-4" />, label: "Configurações", path: "/settings" },
   ];
+
+  const handleNavigation = (path: string) => {
+    if (navigate) {
+      navigate(path);
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -60,12 +79,12 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               label={item.label}
               path={item.path}
               active={currentPath === item.path}
-              onClick={() => navigate(item.path)}
+              onClick={() => handleNavigation(item.path)}
             />
           ))}
         </div>
         <div className="mt-auto pt-4">
-          <Button className="w-full gap-2" onClick={() => navigate("/add-transaction")}>
+          <Button className="w-full gap-2" onClick={() => handleNavigation("/add-transaction")}>
             <Plus className="h-4 w-4" />
             Nova transação
           </Button>
@@ -81,7 +100,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               "flex flex-col items-center justify-center flex-1 h-full",
               currentPath === item.path ? "text-primary" : "text-muted-foreground"
             )}
-            onClick={() => navigate(item.path)}
+            onClick={() => handleNavigation(item.path)}
           >
             <div className="w-5 h-5">{item.icon}</div>
             <span className="text-xs mt-1">{item.label}</span>
@@ -89,7 +108,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         ))}
         <button
           className="flex flex-col items-center justify-center flex-1 h-full text-primary"
-          onClick={() => navigate("/add-transaction")}
+          onClick={() => handleNavigation("/add-transaction")}
         >
           <div className="w-5 h-5"><Plus /></div>
           <span className="text-xs mt-1">Adicionar</span>
