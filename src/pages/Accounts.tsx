@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useQuery } from '@tanstack/react-query';
@@ -80,7 +79,7 @@ const Accounts = () => {
   };
 
   const getTotalBalance = () => {
-    return accounts.reduce((total, account) => total + (account.balance || 0), 0);
+    return accounts.reduce((total, account: any) => total + (account.balance || 0), 0);
   };
 
   if (isLoading) {

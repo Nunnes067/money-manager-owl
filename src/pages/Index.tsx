@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Transaction, BalanceSummary } from '@/types/finance';
 import DashboardLayout from '@/components/layout/DashboardLayout';
@@ -24,7 +23,7 @@ const Index = () => {
   // Atualizar resumo de saldo quando as transações forem carregadas
   useEffect(() => {
     if (transactions.length) {
-      const summary = transactions.reduce((acc: BalanceSummary, transaction: Transaction) => {
+      const summary = transactions.reduce((acc: BalanceSummary, transaction: any) => {
         const amount = transaction.amount;
         
         if (amount > 0) {
@@ -46,8 +45,8 @@ const Index = () => {
   }, [transactions]);
 
   // Filtrar transações por tipo
-  const incomeTransactions = transactions.filter((t: Transaction) => t.amount > 0);
-  const expenseTransactions = transactions.filter((t: Transaction) => t.amount < 0);
+  const incomeTransactions = transactions.filter((t: any) => t.amount > 0);
+  const expenseTransactions = transactions.filter((t: any) => t.amount < 0);
 
   if (isLoading) {
     return (

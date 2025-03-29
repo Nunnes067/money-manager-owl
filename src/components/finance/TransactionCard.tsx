@@ -28,7 +28,7 @@ import { toast } from '@/components/ui/use-toast';
 import { useState } from 'react';
 
 interface TransactionCardProps {
-  transaction: Transaction;
+  transaction: any; // Usar 'any' para compatibilidade, depois refinamos para o tipo Transaction
   onDelete?: () => void;
 }
 

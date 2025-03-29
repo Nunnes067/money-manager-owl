@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Transaction, Category, Account } from "@/types/finance";
 import { toast } from "@/components/ui/use-toast";
@@ -12,10 +11,9 @@ export const fetchTransactions = async () => {
 
     if (error) throw error;
     
-    // Converter as datas de string para objetos Date
     return data.map((transaction: any) => ({
       ...transaction,
-      date: new Date(transaction.date),
+      date: transaction.date,
     }));
   } catch (error: any) {
     console.error("Erro ao buscar transações:", error.message);
@@ -30,9 +28,15 @@ export const fetchTransactions = async () => {
 
 export const addTransaction = async (transaction: Omit<Transaction, "id" | "user_id">) => {
   try {
+    const transactionForSupabase = {
+      ...transaction,
+      date: typeof transaction.date === 'object' ? 
+        (transaction.date as Date).toISOString() : transaction.date
+    };
+
     const { data, error } = await supabase
       .from("transactions")
-      .insert([transaction])
+      .insert([transactionForSupabase])
       .select();
 
     if (error) throw error;
@@ -50,9 +54,15 @@ export const addTransaction = async (transaction: Omit<Transaction, "id" | "user
 
 export const updateTransaction = async (id: string, transaction: Partial<Transaction>) => {
   try {
+    const transactionForSupabase = {
+      ...transaction,
+      date: transaction.date && typeof transaction.date === 'object' ? 
+        (transaction.date as Date).toISOString() : transaction.date
+    };
+
     const { data, error } = await supabase
       .from("transactions")
-      .update(transaction)
+      .update(transactionForSupabase)
       .eq("id", id)
       .select();
 
@@ -89,7 +99,6 @@ export const deleteTransaction = async (id: string) => {
   }
 };
 
-// Funções para gerenciar categorias
 export const fetchCategories = async () => {
   try {
     const { data, error } = await supabase
@@ -171,7 +180,6 @@ export const deleteCategory = async (id: string) => {
   }
 };
 
-// Funções para gerenciar contas
 export const fetchAccounts = async () => {
   try {
     const { data, error } = await supabase
@@ -253,7 +261,6 @@ export const deleteAccount = async (id: string) => {
   }
 };
 
-// Função para gerar relatório
 export const generateReport = async (
   type: 'income' | 'expense' | 'all',
   startDate: Date,
@@ -263,21 +270,17 @@ export const generateReport = async (
   try {
     let query = supabase.from("transactions").select("*");
     
-    // Filtrar por tipo, se necessário
     if (type !== 'all') {
       query = query.eq("type", type);
     }
     
-    // Filtrar por período
     query = query.gte("date", startDate.toISOString());
     query = query.lte("date", endDate.toISOString());
     
-    // Buscar os dados
     const { data, error } = await query.order("date");
     
     if (error) throw error;
     
-    // Processar os dados conforme o agrupamento
     if (data) {
       let processedData = [];
 

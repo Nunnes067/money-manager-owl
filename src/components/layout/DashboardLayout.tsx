@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Wallet, PieChart, Settings, Plus, DollarSign, CreditCard, BarChart4, Calendar } from 'lucide-react';
@@ -38,7 +37,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const isMobile = useIsMobile();
   
   // Use try-catch to handle the case when not inside a Router context
-  let navigate: NavigateFunction | undefined;
+  let navigate: NavigateFunction | ((to: string) => void);
   let currentPath = '/';
   
   try {
@@ -46,9 +45,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     currentPath = useLocation().pathname;
   } catch (error) {
     console.warn('Router context not available:', error);
-    // Provide fallback navigation function that uses window.location
-    navigate = (to: string) => {
-      window.location.href = to;
+    // Fornecer uma função de navegação alternativa que usa window.location
+    navigate = (to: any) => {
+      window.location.href = to as string;
     };
   }
 
@@ -61,9 +60,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   ];
 
   const handleNavigation = (path: string) => {
-    if (navigate) {
-      navigate(path);
-    }
+    navigate(path);
   };
 
   return (

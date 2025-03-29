@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -77,7 +77,7 @@ const AddTransaction = () => {
       const transactionData: Omit<Transaction, "id" | "user_id"> = {
         description: data.description,
         amount: data.type === "expense" ? -amount : amount,
-        date: new Date(data.date),
+        date: data.date,
         type: data.type,
         category: data.category,
         is_recurring: data.is_recurring,
@@ -97,7 +97,7 @@ const AddTransaction = () => {
           const installmentTransaction = {
             ...transactionData,
             amount: data.type === "expense" ? -installmentAmount : installmentAmount,
-            date: installmentDate,
+            date: installmentDate.toISOString().split('T')[0],
             installment_current: i + 1,
             installment_total: totalInstallments,
           };

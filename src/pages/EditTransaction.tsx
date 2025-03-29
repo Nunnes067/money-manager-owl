@@ -72,19 +72,21 @@ const EditTransaction = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data) => {
-      if (data) {
-        form.setValue('description', data.description);
-        form.setValue('amount', Math.abs(data.amount).toString());
-        form.setValue('type', data.amount > 0 ? 'income' : 'expense');
-        form.setValue('category', data.category || '');
-        form.setValue('account_id', data.account_id || '');
-        form.setValue('is_recurring', data.is_recurring || false);
-        form.setValue('recurring_period', data.recurring_period);
-        form.setValue('date', new Date(data.date).toISOString().split('T')[0]);
-      }
-    }
   });
+
+  // Atualizar o formulário quando os dados da transação forem carregados
+  useEffect(() => {
+    if (transaction) {
+      form.setValue('description', transaction.description);
+      form.setValue('amount', Math.abs(transaction.amount).toString());
+      form.setValue('type', transaction.amount > 0 ? 'income' : 'expense');
+      form.setValue('category', transaction.category || '');
+      form.setValue('account_id', transaction.account_id || '');
+      form.setValue('is_recurring', transaction.is_recurring || false);
+      form.setValue('recurring_period', transaction.recurring_period);
+      form.setValue('date', new Date(transaction.date).toISOString().split('T')[0]);
+    }
+  }, [transaction, form]);
 
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
@@ -108,7 +110,7 @@ const EditTransaction = () => {
       const updatedTransaction: Partial<Transaction> = {
         description: data.description,
         amount: data.type === "expense" ? -amount : amount,
-        date: new Date(data.date),
+        date: data.date,
         type: data.type,
         category: data.category,
         is_recurring: data.is_recurring,

@@ -3,7 +3,7 @@ export interface Transaction {
   id: string;
   amount: number;
   description: string;
-  date: Date;
+  date: string;  // Alterado de Date para string para compatibilidade com Supabase
   type: 'income' | 'expense';
   category?: string;
   is_recurring: boolean;
