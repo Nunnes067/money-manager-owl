@@ -325,7 +325,7 @@ export const generateReport = async (
       else if (groupBy === 'account') {
         const accountGroups: Record<string, any> = {};
         
-        for (const tx of data) {
+        for (const tx of data as (Transaction & { account_id?: string })[]) {
           const account = tx.account_id || 'Sem conta';
           if (!accountGroups[account]) {
             accountGroups[account] = {
