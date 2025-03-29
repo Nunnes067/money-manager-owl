@@ -7,6 +7,12 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AddTransaction from "./pages/AddTransaction";
+import Reports from "./pages/Reports";
+import Accounts from "./pages/Accounts";
+import Settings from "./pages/Settings";
+import Planning from "./pages/Planning";
+import EditTransaction from "./pages/EditTransaction";
+import AddAccount from "./pages/AddAccount";
 
 // Create a client
 const queryClient = new QueryClient();
@@ -21,6 +27,12 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/add-transaction" element={<AddTransaction />} />
+            <Route path="/edit-transaction/:id" element={<EditTransaction />} />
+            <Route path="/accounts" element={<Accounts />} />
+            <Route path="/add-account" element={<AddAccount />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/planning" element={<Planning />} />
+            <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </TooltipProvider>

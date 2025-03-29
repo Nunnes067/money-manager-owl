@@ -1,9 +1,9 @@
 
 import React, { useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Transaction, Category, Account } from '@/types/finance';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -25,9 +25,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { addTransaction, fetchCategories, fetchAccounts } from '@/services/financeService';
+import { fetchTransactions, updateTransaction, fetchCategories, fetchAccounts } from '@/services/financeService';
 import { useToast } from '@/components/ui/use-toast';
 import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const formSchema = z.object({
   description: z.string().min(3, "A descrição precisa ter pelo menos 3 caracteres"),
@@ -39,23 +40,13 @@ const formSchema = z.object({
   account_id: z.string().optional(),
   is_recurring: z.boolean().default(false),
   recurring_period: z.enum(["daily", "weekly", "monthly", "yearly"]).optional(),
-  installment_total: z.string().optional(),
   date: z.string(),
 });
 
-const AddTransaction = () => {
+const EditTransaction = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  const { data: categories = [] } = useQuery({
-    queryKey: ['categories'],
-    queryFn: fetchCategories
-  });
-
-  const { data: accounts = [] } = useQuery({
-    queryKey: ['accounts'],
-    queryFn: fetchAccounts
-  });
+  const { id } = useParams<{ id: string }>();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -68,13 +59,53 @@ const AddTransaction = () => {
     },
   });
 
+  const { data: transaction, isLoading } = useQuery({
+    queryKey: ['transaction', id],
+    queryFn: async () => {
+      if (!id) return null;
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("*")
+        .eq("id", id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      if (data) {
+        form.setValue('description', data.description);
+        form.setValue('amount', Math.abs(data.amount).toString());
+        form.setValue('type', data.amount > 0 ? 'income' : 'expense');
+        form.setValue('category', data.category || '');
+        form.setValue('account_id', data.account_id || '');
+        form.setValue('is_recurring', data.is_recurring || false);
+        form.setValue('recurring_period', data.recurring_period);
+        form.setValue('date', new Date(data.date).toISOString().split('T')[0]);
+      }
+    }
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn: fetchCategories
+  });
+
+  const { data: accounts = [] } = useQuery({
+    queryKey: ['accounts'],
+    queryFn: fetchAccounts
+  });
+
   const watchIsRecurring = form.watch("is_recurring");
   const watchType = form.watch("type");
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
+    if (!id) return;
+    
     try {
       const amount = parseFloat(data.amount);
-      const transactionData: Omit<Transaction, "id" | "user_id"> = {
+      
+      const updatedTransaction: Partial<Transaction> = {
         description: data.description,
         amount: data.type === "expense" ? -amount : amount,
         date: new Date(data.date),
@@ -85,50 +116,46 @@ const AddTransaction = () => {
         account_id: data.account_id,
       };
 
-      if (data.installment_total) {
-        const totalInstallments = parseInt(data.installment_total);
-        const installmentAmount = amount / totalInstallments;
+      await updateTransaction(id, updatedTransaction);
 
-        // Criar transações para cada parcela
-        for (let i = 0; i < totalInstallments; i++) {
-          const installmentDate = new Date(data.date);
-          installmentDate.setMonth(installmentDate.getMonth() + i);
-
-          const installmentTransaction = {
-            ...transactionData,
-            amount: data.type === "expense" ? -installmentAmount : installmentAmount,
-            date: installmentDate,
-            installment_current: i + 1,
-            installment_total: totalInstallments,
-          };
-
-          await addTransaction(installmentTransaction);
-        }
-
-        toast({
-          title: "Parcelas adicionadas",
-          description: `${totalInstallments} parcelas foram adicionadas com sucesso`,
-        });
-      } else {
-        // Adicionar uma única transação
-        await addTransaction(transactionData);
-
-        toast({
-          title: "Transação adicionada",
-          description: "A transação foi adicionada com sucesso",
-        });
-      }
+      toast({
+        title: "Transação atualizada",
+        description: "A transação foi atualizada com sucesso",
+      });
 
       navigate("/");
     } catch (error) {
-      console.error("Erro ao adicionar transação:", error);
+      console.error("Erro ao atualizar transação:", error);
       toast({
         title: "Erro",
-        description: "Ocorreu um erro ao adicionar a transação",
+        description: "Ocorreu um erro ao atualizar a transação",
         variant: "destructive",
       });
     }
   };
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!transaction) {
+    return (
+      <DashboardLayout>
+        <div className="max-w-lg mx-auto">
+          <div className="bg-destructive/20 p-4 rounded-lg">
+            <p className="text-destructive font-medium">Transação não encontrada</p>
+          </div>
+          <Button className="mt-4" onClick={() => navigate('/')}>Voltar para Transações</Button>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -142,7 +169,7 @@ const AddTransaction = () => {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-2xl font-bold">Nova transação</h1>
+          <h1 className="text-2xl font-bold">Editar transação</h1>
         </div>
 
         <div className="bg-card border rounded-lg p-6">
@@ -222,7 +249,7 @@ const AddTransaction = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Conta</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione uma conta" />
@@ -245,7 +272,7 @@ const AddTransaction = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Categoria</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione uma categoria" />
@@ -319,7 +346,7 @@ const AddTransaction = () => {
                         <FormLabel>Período de recorrência</FormLabel>
                         <Select
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          value={field.value}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -338,32 +365,10 @@ const AddTransaction = () => {
                     )}
                   />
                 )}
-
-                <FormField
-                  control={form.control}
-                  name="installment_total"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Número de parcelas</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="1"
-                          placeholder="Deixe em branco se não for parcelado"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Deixe em branco se não for uma compra parcelada
-                      </p>
-                    </FormItem>
-                  )}
-                />
               </div>
 
               <Button type="submit" className="w-full">
-                Adicionar transação
+                Salvar alterações
               </Button>
             </form>
           </Form>
@@ -373,4 +378,4 @@ const AddTransaction = () => {
   );
 };
 
-export default AddTransaction;
+export default EditTransaction;

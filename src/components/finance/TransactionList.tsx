@@ -7,9 +7,10 @@ import { Search } from 'lucide-react';
 
 interface TransactionListProps {
   transactions: Transaction[];
+  onTransactionDelete?: () => void;
 }
 
-export function TransactionList({ transactions }: TransactionListProps) {
+export function TransactionList({ transactions, onTransactionDelete }: TransactionListProps) {
   const [searchTerm, setSearchTerm] = useState('');
   
   const filteredTransactions = transactions.filter(transaction => 
@@ -36,7 +37,11 @@ export function TransactionList({ transactions }: TransactionListProps) {
       ) : (
         <div className="space-y-1 animate-slide-up">
           {filteredTransactions.map((transaction) => (
-            <TransactionCard key={transaction.id} transaction={transaction} />
+            <TransactionCard 
+              key={transaction.id} 
+              transaction={transaction}
+              onDelete={onTransactionDelete} 
+            />
           ))}
         </div>
       )}

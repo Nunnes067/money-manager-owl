@@ -5,111 +5,71 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { BalanceCard } from '@/components/finance/BalanceCard';
 import { TransactionList } from '@/components/finance/TransactionList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { v4 as uuidv4 } from 'uuid';
-
-const DEFAULT_TRANSACTIONS: Transaction[] = [
-  {
-    id: uuidv4(),
-    description: 'Salário',
-    amount: 3500,
-    date: new Date('2023-09-05'),
-    type: 'income',
-    category: 'Salário',
-    isRecurring: true,
-    recurringPeriod: 'monthly',
-    installment: null
-  },
-  {
-    id: uuidv4(),
-    description: 'Aluguel',
-    amount: -1200,
-    date: new Date('2023-09-10'),
-    type: 'expense',
-    category: 'Moradia',
-    isRecurring: true,
-    recurringPeriod: 'monthly',
-    installment: null
-  },
-  {
-    id: uuidv4(),
-    description: 'Supermercado',
-    amount: -450,
-    date: new Date('2023-09-15'),
-    type: 'expense',
-    category: 'Alimentação',
-    isRecurring: false,
-    installment: null
-  },
-  {
-    id: uuidv4(),
-    description: 'Notebook',
-    amount: -800,
-    date: new Date('2023-09-20'),
-    type: 'expense',
-    category: 'Eletrônicos',
-    isRecurring: false,
-    installment: {
-      current: 1,
-      total: 5
-    }
-  },
-  {
-    id: uuidv4(),
-    description: 'Freelance design',
-    amount: 800,
-    date: new Date('2023-09-22'),
-    type: 'income',
-    category: 'Freelance',
-    isRecurring: false,
-    installment: null
-  }
-];
+import { useQuery } from '@tanstack/react-query';
+import { fetchTransactions } from '@/services/financeService';
+import { Loader2 } from 'lucide-react';
 
 const Index = () => {
-  const [transactions, setTransactions] = useState<Transaction[]>(() => {
-    // Try to load from localStorage on initial render
-    const savedTransactions = localStorage.getItem('transactions');
-    return savedTransactions ? JSON.parse(savedTransactions) : DEFAULT_TRANSACTIONS;
-  });
-  
   const [balanceSummary, setBalanceSummary] = useState<BalanceSummary>({
     totalBalance: 0,
     income: 0,
     expenses: 0
   });
 
-  // Update balance summary whenever transactions change
+  const { data: transactions = [], isLoading, error, refetch } = useQuery({
+    queryKey: ['transactions'],
+    queryFn: fetchTransactions
+  });
+
+  // Atualizar resumo de saldo quando as transações forem carregadas
   useEffect(() => {
-    // Save to localStorage whenever transactions change
-    localStorage.setItem('transactions', JSON.stringify(transactions));
-    
-    const summary = transactions.reduce((acc, transaction) => {
-      const amount = transaction.amount;
+    if (transactions.length) {
+      const summary = transactions.reduce((acc: BalanceSummary, transaction: Transaction) => {
+        const amount = transaction.amount;
+        
+        if (amount > 0) {
+          acc.income += amount;
+        } else {
+          acc.expenses += Math.abs(amount);
+        }
+        
+        acc.totalBalance += amount;
+        return acc;
+      }, {
+        totalBalance: 0,
+        income: 0,
+        expenses: 0
+      });
       
-      if (amount > 0) {
-        acc.income += amount;
-      } else {
-        acc.expenses += Math.abs(amount);
-      }
-      
-      acc.totalBalance += amount;
-      return acc;
-    }, {
-      totalBalance: 0,
-      income: 0,
-      expenses: 0
-    });
-    
-    setBalanceSummary(summary);
+      setBalanceSummary(summary);
+    }
   }, [transactions]);
 
-  const addTransaction = (transaction: Transaction) => {
-    setTransactions(prev => [...prev, transaction]);
-  };
+  // Filtrar transações por tipo
+  const incomeTransactions = transactions.filter((t: Transaction) => t.amount > 0);
+  const expenseTransactions = transactions.filter((t: Transaction) => t.amount < 0);
 
-  // Filter transactions by type
-  const incomeTransactions = transactions.filter(t => t.amount > 0);
-  const expenseTransactions = transactions.filter(t => t.amount < 0);
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-destructive/20 p-4 rounded-lg text-center">
+            <p className="text-destructive font-medium">Erro ao carregar transações. Tente novamente.</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -126,15 +86,24 @@ const Index = () => {
           </TabsList>
           
           <TabsContent value="all">
-            <TransactionList transactions={transactions} />
+            <TransactionList 
+              transactions={transactions} 
+              onTransactionDelete={() => refetch()}
+            />
           </TabsContent>
           
           <TabsContent value="income">
-            <TransactionList transactions={incomeTransactions} />
+            <TransactionList 
+              transactions={incomeTransactions} 
+              onTransactionDelete={() => refetch()}
+            />
           </TabsContent>
           
           <TabsContent value="expense">
-            <TransactionList transactions={expenseTransactions} />
+            <TransactionList 
+              transactions={expenseTransactions} 
+              onTransactionDelete={() => refetch()}
+            />
           </TabsContent>
         </Tabs>
       </div>

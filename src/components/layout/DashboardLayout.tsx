@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { Wallet, PieChart, Settings, Plus, DollarSign } from 'lucide-react';
+import { Wallet, PieChart, Settings, Plus, DollarSign, CreditCard, BarChart4, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate, useLocation, NavigateFunction } from 'react-router-dom';
 
@@ -53,7 +53,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   const navItems = [
     { icon: <DollarSign className="h-4 w-4" />, label: "Transações", path: "/" },
-    { icon: <PieChart className="h-4 w-4" />, label: "Relatórios", path: "/reports" },
+    { icon: <CreditCard className="h-4 w-4" />, label: "Contas", path: "/accounts" },
+    { icon: <BarChart4 className="h-4 w-4" />, label: "Relatórios", path: "/reports" },
+    { icon: <Calendar className="h-4 w-4" />, label: "Planejamento", path: "/planning" },
     { icon: <Settings className="h-4 w-4" />, label: "Configurações", path: "/settings" },
   ];
 
