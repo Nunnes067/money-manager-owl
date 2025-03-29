@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { ArrowLeft } from 'lucide-react';
@@ -99,6 +100,8 @@ const AddTransaction = () => {
       if (data.installment_total && parseInt(data.installment_total) > 1) {
         const totalInstallments = parseInt(data.installment_total);
         const installmentAmount = amount / totalInstallments;
+        
+        let successCount = 0;
 
         // Criar transações para cada parcela
         for (let i = 0; i < totalInstallments; i++) {
@@ -114,13 +117,16 @@ const AddTransaction = () => {
           };
 
           const result = await addTransaction(installmentTransaction);
+          if (result) successCount++;
           console.log(`Parcela ${i+1} adicionada:`, result);
         }
 
         toast({
           title: "Parcelas adicionadas",
-          description: `${totalInstallments} parcelas foram adicionadas com sucesso`,
+          description: `${successCount} de ${totalInstallments} parcelas foram adicionadas com sucesso`,
         });
+        
+        navigate("/");
       } else {
         // Adicionar uma única transação
         const result = await addTransaction(transactionData);
@@ -131,12 +137,11 @@ const AddTransaction = () => {
             title: "Transação adicionada",
             description: "A transação foi adicionada com sucesso",
           });
+          navigate("/");
         } else {
           throw new Error("Falha ao adicionar transação");
         }
       }
-
-      navigate("/");
     } catch (error) {
       console.error("Erro ao adicionar transação:", error);
       toast({

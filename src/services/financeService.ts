@@ -32,10 +32,19 @@ export const fetchTransactions = async () => {
 export const addTransaction = async (transaction: Omit<Transaction, "id" | "user_id">) => {
   try {
     console.log("Adicionando transação:", transaction);
+    
+    // Remova o account_id se for undefined para evitar erros
+    const transactionData = { ...transaction };
+    if (transactionData.account_id && 
+        (transactionData.account_id === undefined || 
+         typeof transactionData.account_id === 'object' && transactionData.account_id._type === 'undefined')) {
+      delete transactionData.account_id;
+    }
+    
     const transactionForSupabase = {
-      ...transaction,
-      date: typeof transaction.date === 'object' ? 
-        (transaction.date as Date).toISOString() : transaction.date
+      ...transactionData,
+      date: typeof transactionData.date === 'object' ? 
+        (transactionData.date as Date).toISOString() : transactionData.date
     };
 
     const { data, error } = await supabase
@@ -48,9 +57,9 @@ export const addTransaction = async (transaction: Omit<Transaction, "id" | "user
       throw error;
     }
     
-    // Atualizar o saldo da conta, se especificada
-    if (transaction.account_id) {
-      await updateAccountBalance(transaction.account_id, transaction.amount);
+    // Atualizar o saldo da conta, se especificada e válida
+    if (transactionData.account_id && typeof transactionData.account_id === 'string') {
+      await updateAccountBalance(transactionData.account_id, transactionData.amount);
     }
     
     return data[0];
@@ -289,9 +298,16 @@ export const fetchAccounts = async () => {
 export const addAccount = async (account: Omit<Account, "id" | "user_id">) => {
   try {
     console.log("Adicionando conta:", account);
+    
+    // Add the user_id field to the account
+    const accountData = {
+      ...account,
+      user_id: (await supabase.auth.getUser()).data.user?.id
+    };
+    
     const { data, error } = await supabase
       .from("accounts")
-      .insert([account])
+      .insert([accountData])
       .select();
 
     if (error) {
@@ -417,7 +433,7 @@ export const generateReport = async (
       else if (groupBy === 'account') {
         const accountGroups: Record<string, any> = {};
         
-        for (const tx of data as (Transaction & { account_id?: string })[]) {
+        for (const tx of data as any[]) {
           const account = tx.account_id || 'Sem conta';
           if (!accountGroups[account]) {
             accountGroups[account] = {
