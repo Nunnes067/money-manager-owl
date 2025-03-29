@@ -74,6 +74,9 @@ export const updateTransaction = async (id: string, transaction: Partial<Transac
       .eq("id", id)
       .single();
     
+    // Cast oldTransaction to Transaction type with account_id
+    const oldTransactionWithAccount = oldTransaction as Transaction & { account_id?: string };
+    
     const transactionForSupabase = {
       ...transaction,
       date: transaction.date && typeof transaction.date === 'object' ? 
@@ -89,19 +92,19 @@ export const updateTransaction = async (id: string, transaction: Partial<Transac
     if (error) throw error;
     
     // Atualizar os saldos das contas se necessário
-    if (oldTransaction && transaction.amount !== undefined) {
+    if (oldTransactionWithAccount && transaction.amount !== undefined) {
       // Se a conta foi alterada
-      if (transaction.account_id && oldTransaction.account_id && 
-          transaction.account_id !== oldTransaction.account_id) {
+      if (transaction.account_id && oldTransactionWithAccount.account_id && 
+          transaction.account_id !== oldTransactionWithAccount.account_id) {
         // Estornar valor da conta antiga
-        await updateAccountBalance(oldTransaction.account_id, -oldTransaction.amount);
+        await updateAccountBalance(oldTransactionWithAccount.account_id, -oldTransactionWithAccount.amount);
         // Adicionar à nova conta
         await updateAccountBalance(transaction.account_id, transaction.amount);
       } 
       // Se apenas o valor mudou, atualizar na mesma conta
-      else if (oldTransaction.account_id && transaction.amount !== oldTransaction.amount) {
-        const difference = transaction.amount - oldTransaction.amount;
-        await updateAccountBalance(oldTransaction.account_id, difference);
+      else if (oldTransactionWithAccount.account_id && transaction.amount !== oldTransactionWithAccount.amount) {
+        const difference = transaction.amount - oldTransactionWithAccount.amount;
+        await updateAccountBalance(oldTransactionWithAccount.account_id, difference);
       }
     }
     
@@ -126,6 +129,9 @@ export const deleteTransaction = async (id: string) => {
       .eq("id", id)
       .single();
     
+    // Cast transaction to Transaction type with account_id
+    const transactionWithAccount = transaction as Transaction & { account_id?: string };
+    
     const { error } = await supabase
       .from("transactions")
       .delete()
@@ -134,9 +140,9 @@ export const deleteTransaction = async (id: string) => {
     if (error) throw error;
     
     // Se a transação tinha uma conta associada, ajustar o saldo
-    if (transaction && transaction.account_id) {
+    if (transactionWithAccount && transactionWithAccount.account_id) {
       // Valor inverso para compensar a remoção
-      await updateAccountBalance(transaction.account_id, -transaction.amount);
+      await updateAccountBalance(transactionWithAccount.account_id, -transactionWithAccount.amount);
     }
     
     return true;
