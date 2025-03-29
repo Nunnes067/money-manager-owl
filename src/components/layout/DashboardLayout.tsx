@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { Wallet, PieChart, Settings, Plus, DollarSign, CreditCard, BarChart4, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate, useLocation, NavigateFunction } from 'react-router-dom';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface NavItemProps {
   icon: React.ReactNode;
@@ -34,6 +35,8 @@ interface DashboardLayoutProps {
 }
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
+  const isMobile = useIsMobile();
+  
   // Use try-catch to handle the case when not inside a Router context
   let navigate: NavigateFunction | undefined;
   let currentPath = '/';
@@ -43,11 +46,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     currentPath = useLocation().pathname;
   } catch (error) {
     console.warn('Router context not available:', error);
-    // Provide fallback navigation function
-    navigate = (path: string) => {
-      console.warn(`Navigation attempted to ${path}, but Router is not available`);
-      // If we need to force navigation without the router, we can use:
-      window.location.href = path;
+    // Provide fallback navigation function that uses window.location
+    navigate = (to: string) => {
+      window.location.href = to;
     };
   }
 

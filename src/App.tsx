@@ -1,4 +1,5 @@
 
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,30 +15,40 @@ import Planning from "./pages/Planning";
 import EditTransaction from "./pages/EditTransaction";
 import AddAccount from "./pages/AddAccount";
 
-// Create a client
-const queryClient = new QueryClient();
+// Create a client with specific configuration
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
-const App = () => {
+const App: React.FC = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/add-transaction" element={<AddTransaction />} />
-            <Route path="/edit-transaction/:id" element={<EditTransaction />} />
-            <Route path="/accounts" element={<Accounts />} />
-            <Route path="/add-account" element={<AddAccount />} />
-            <Route path="/reports" element={<Reports />} />
-            <Route path="/planning" element={<Planning />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </TooltipProvider>
-      </BrowserRouter>
-    </QueryClientProvider>
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/add-transaction" element={<AddTransaction />} />
+              <Route path="/edit-transaction/:id" element={<EditTransaction />} />
+              <Route path="/accounts" element={<Accounts />} />
+              <Route path="/add-account" element={<AddAccount />} />
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/planning" element={<Planning />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </TooltipProvider>
+        </BrowserRouter>
+      </QueryClientProvider>
+    </React.StrictMode>
   );
 };
 
