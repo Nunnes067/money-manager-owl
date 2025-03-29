@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { ArrowLeft, Loader2 } from 'lucide-react';
@@ -69,7 +70,7 @@ const EditTransaction = () => {
         .single();
       
       if (error) throw error;
-      return data;
+      return data as Transaction & { account_id?: string };
     },
   });
 
