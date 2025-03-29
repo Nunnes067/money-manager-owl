@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -41,18 +40,20 @@ const formSchema = z.object({
   recurring_period: z.enum(["daily", "weekly", "monthly", "yearly"]).optional(),
   installment_total: z.string().optional(),
   date: z.string(),
+  due_date: z.string().optional(),
+  payment_status: z.enum(["pending", "paid", "overdue"]).optional()
 });
 
 const AddTransaction = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const { data: categories = [] } = useQuery({
+  const { data: categories = [], isLoading: loadingCategories } = useQuery({
     queryKey: ['categories'],
     queryFn: fetchCategories
   });
 
-  const { data: accounts = [] } = useQuery({
+  const { data: accounts = [], isLoading: loadingAccounts } = useQuery({
     queryKey: ['accounts'],
     queryFn: fetchAccounts
   });
@@ -65,14 +66,20 @@ const AddTransaction = () => {
       type: "expense",
       is_recurring: false,
       date: new Date().toISOString().split('T')[0],
+      payment_status: "pending"
     },
   });
 
   const watchIsRecurring = form.watch("is_recurring");
   const watchType = form.watch("type");
 
+  useEffect(() => {
+    console.log("Contas carregadas no componente:", accounts);
+  }, [accounts]);
+
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
+      console.log("Formulário enviado:", data);
       const amount = parseFloat(data.amount);
       const transactionData: Omit<Transaction, "id" | "user_id"> = {
         description: data.description,
@@ -83,9 +90,13 @@ const AddTransaction = () => {
         is_recurring: data.is_recurring,
         recurring_period: data.is_recurring ? data.recurring_period : undefined,
         account_id: data.account_id,
+        payment_status: data.payment_status,
+        due_date: data.due_date
       };
 
-      if (data.installment_total) {
+      console.log("Transação a ser enviada:", transactionData);
+
+      if (data.installment_total && parseInt(data.installment_total) > 1) {
         const totalInstallments = parseInt(data.installment_total);
         const installmentAmount = amount / totalInstallments;
 
@@ -102,7 +113,8 @@ const AddTransaction = () => {
             installment_total: totalInstallments,
           };
 
-          await addTransaction(installmentTransaction);
+          const result = await addTransaction(installmentTransaction);
+          console.log(`Parcela ${i+1} adicionada:`, result);
         }
 
         toast({
@@ -111,12 +123,17 @@ const AddTransaction = () => {
         });
       } else {
         // Adicionar uma única transação
-        await addTransaction(transactionData);
+        const result = await addTransaction(transactionData);
+        console.log("Resultado da adição:", result);
 
-        toast({
-          title: "Transação adicionada",
-          description: "A transação foi adicionada com sucesso",
-        });
+        if (result) {
+          toast({
+            title: "Transação adicionada",
+            description: "A transação foi adicionada com sucesso",
+          });
+        } else {
+          throw new Error("Falha ao adicionar transação");
+        }
       }
 
       navigate("/");
@@ -229,9 +246,15 @@ const AddTransaction = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {accounts.map((account: any) => (
-                          <SelectItem key={account.id} value={account.id}>{account.name}</SelectItem>
-                        ))}
+                        {loadingAccounts ? (
+                          <SelectItem value="loading" disabled>Carregando...</SelectItem>
+                        ) : accounts.length === 0 ? (
+                          <SelectItem value="no-accounts" disabled>Nenhuma conta disponível</SelectItem>
+                        ) : (
+                          accounts.map((account: any) => (
+                            <SelectItem key={account.id} value={account.id}>{account.name}</SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -254,7 +277,6 @@ const AddTransaction = () => {
                       <SelectContent>
                         {categories
                           .filter((cat: Category) => 
-                            // Filtrar categorias de acordo com o tipo de transação
                             (watchType === "income" && ["Salário", "Investimentos"].includes(cat.name)) ||
                             (watchType === "expense" && !["Salário", "Investimentos"].includes(cat.name))
                           )

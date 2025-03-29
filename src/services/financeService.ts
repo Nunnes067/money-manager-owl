@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Transaction, Category, Account } from "@/types/finance";
 import { toast } from "@/components/ui/use-toast";
@@ -6,7 +7,7 @@ export const fetchTransactions = async () => {
   try {
     const { data, error } = await supabase
       .from("transactions")
-      .select("*")
+      .select("*, accounts(name, color)")
       .order("date", { ascending: false });
 
     if (error) throw error;
@@ -14,6 +15,8 @@ export const fetchTransactions = async () => {
     return data.map((transaction: any) => ({
       ...transaction,
       date: transaction.date,
+      account_name: transaction.accounts?.name || 'Conta não especificada',
+      account_color: transaction.accounts?.color
     }));
   } catch (error: any) {
     console.error("Erro ao buscar transações:", error.message);
@@ -28,6 +31,7 @@ export const fetchTransactions = async () => {
 
 export const addTransaction = async (transaction: Omit<Transaction, "id" | "user_id">) => {
   try {
+    console.log("Adicionando transação:", transaction);
     const transactionForSupabase = {
       ...transaction,
       date: typeof transaction.date === 'object' ? 
@@ -39,7 +43,16 @@ export const addTransaction = async (transaction: Omit<Transaction, "id" | "user
       .insert([transactionForSupabase])
       .select();
 
-    if (error) throw error;
+    if (error) {
+      console.error("Erro do Supabase:", error);
+      throw error;
+    }
+    
+    // Atualizar o saldo da conta, se especificada
+    if (transaction.account_id) {
+      await updateAccountBalance(transaction.account_id, transaction.amount);
+    }
+    
     return data[0];
   } catch (error: any) {
     console.error("Erro ao adicionar transação:", error.message);
@@ -54,6 +67,13 @@ export const addTransaction = async (transaction: Omit<Transaction, "id" | "user
 
 export const updateTransaction = async (id: string, transaction: Partial<Transaction>) => {
   try {
+    // Buscar a transação antiga para comparar valores
+    const { data: oldTransaction } = await supabase
+      .from("transactions")
+      .select("*")
+      .eq("id", id)
+      .single();
+    
     const transactionForSupabase = {
       ...transaction,
       date: transaction.date && typeof transaction.date === 'object' ? 
@@ -67,6 +87,24 @@ export const updateTransaction = async (id: string, transaction: Partial<Transac
       .select();
 
     if (error) throw error;
+    
+    // Atualizar os saldos das contas se necessário
+    if (oldTransaction && transaction.amount !== undefined) {
+      // Se a conta foi alterada
+      if (transaction.account_id && oldTransaction.account_id && 
+          transaction.account_id !== oldTransaction.account_id) {
+        // Estornar valor da conta antiga
+        await updateAccountBalance(oldTransaction.account_id, -oldTransaction.amount);
+        // Adicionar à nova conta
+        await updateAccountBalance(transaction.account_id, transaction.amount);
+      } 
+      // Se apenas o valor mudou, atualizar na mesma conta
+      else if (oldTransaction.account_id && transaction.amount !== oldTransaction.amount) {
+        const difference = transaction.amount - oldTransaction.amount;
+        await updateAccountBalance(oldTransaction.account_id, difference);
+      }
+    }
+    
     return data[0];
   } catch (error: any) {
     console.error("Erro ao atualizar transação:", error.message);
@@ -81,12 +119,26 @@ export const updateTransaction = async (id: string, transaction: Partial<Transac
 
 export const deleteTransaction = async (id: string) => {
   try {
+    // Buscar a transação antes de excluir
+    const { data: transaction } = await supabase
+      .from("transactions")
+      .select("*")
+      .eq("id", id)
+      .single();
+    
     const { error } = await supabase
       .from("transactions")
       .delete()
       .eq("id", id);
 
     if (error) throw error;
+    
+    // Se a transação tinha uma conta associada, ajustar o saldo
+    if (transaction && transaction.account_id) {
+      // Valor inverso para compensar a remoção
+      await updateAccountBalance(transaction.account_id, -transaction.amount);
+    }
+    
     return true;
   } catch (error: any) {
     console.error("Erro ao excluir transação:", error.message);
@@ -95,6 +147,33 @@ export const deleteTransaction = async (id: string) => {
       description: "Não foi possível excluir a transação",
       variant: "destructive",
     });
+    return false;
+  }
+};
+
+// Nova função para atualizar o saldo da conta
+const updateAccountBalance = async (accountId: string, amountChange: number) => {
+  try {
+    const { data: account, error: fetchError } = await supabase
+      .from("accounts")
+      .select("balance")
+      .eq("id", accountId)
+      .single();
+    
+    if (fetchError) throw fetchError;
+    
+    const newBalance = (account.balance || 0) + amountChange;
+    
+    const { error: updateError } = await supabase
+      .from("accounts")
+      .update({ balance: newBalance })
+      .eq("id", accountId);
+    
+    if (updateError) throw updateError;
+    
+    return true;
+  } catch (error) {
+    console.error("Erro ao atualizar saldo da conta:", error);
     return false;
   }
 };
@@ -188,6 +267,7 @@ export const fetchAccounts = async () => {
       .order("name");
 
     if (error) throw error;
+    console.log("Contas carregadas:", data);
     return data;
   } catch (error: any) {
     console.error("Erro ao buscar contas:", error.message);
@@ -202,12 +282,18 @@ export const fetchAccounts = async () => {
 
 export const addAccount = async (account: Omit<Account, "id" | "user_id">) => {
   try {
+    console.log("Adicionando conta:", account);
     const { data, error } = await supabase
       .from("accounts")
       .insert([account])
       .select();
 
-    if (error) throw error;
+    if (error) {
+      console.error("Erro do Supabase ao adicionar conta:", error);
+      throw error;
+    }
+    
+    console.log("Conta adicionada com sucesso:", data[0]);
     return data[0];
   } catch (error: any) {
     console.error("Erro ao adicionar conta:", error.message);
