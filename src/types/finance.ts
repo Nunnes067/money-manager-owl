@@ -3,7 +3,7 @@ export interface Transaction {
   id: string;
   amount: number;
   description: string;
-  date: string;  // Alterado de Date para string para compatibilidade com Supabase
+  date: string;  // Mantido como string para compatibilidade com Supabase
   type: 'income' | 'expense';
   category?: string;
   is_recurring: boolean;
@@ -12,12 +12,16 @@ export interface Transaction {
   installment_total?: number;
   account_id?: string;
   user_id?: string;
+  due_date?: string;  // Data de vencimento
+  payment_status?: 'pending' | 'paid' | 'overdue';  // Status de pagamento
 }
 
 export interface BalanceSummary {
   totalBalance: number;
   income: number;
   expenses: number;
+  pendingExpenses: number;  // Despesas pendentes
+  overdueExpenses: number;  // Despesas atrasadas
 }
 
 export interface Category {
@@ -51,4 +55,33 @@ export interface Report {
   endDate?: Date;
   groupBy: 'category' | 'date' | 'account';
   data: any[];
+}
+
+// Nova interface para previsão financeira
+export interface FinancialForecast {
+  month: string;
+  expectedIncome: number;
+  expectedExpenses: number;
+  expectedBalance: number;
+}
+
+// Nova interface para metas financeiras
+export interface FinancialGoal {
+  id: string;
+  title: string;
+  targetAmount: number;
+  currentAmount: number;
+  deadline: string;
+  category: string;
+  progress: number;
+}
+
+// Nova interface para alertas financeiros
+export interface FinancialAlert {
+  id: string;
+  title: string;
+  description: string;
+  type: 'info' | 'warning' | 'danger';
+  date: string;
+  isRead: boolean;
 }
