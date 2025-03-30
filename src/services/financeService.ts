@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Transaction, Category, Account } from "@/types/finance";
 import { toast } from "@/components/ui/use-toast";
@@ -58,17 +57,13 @@ export const addTransaction = async (transaction: Omit<Transaction, "id" | "user
       console.error("Erro do Supabase:", error);
       throw error;
     }
-    
-    // Store account_id in a separate variable after validation to avoid TypeScript error
-    const validAccountId = transactionData.account_id && 
-      typeof transactionData.account_id === 'string' && 
-      transactionData.account_id.trim() !== '' 
-      ? transactionData.account_id 
-      : null;
+
+    // Use optional chaining and nullish coalescing to safely handle account_id
+    const accountId = transactionData.account_id?.toString() ?? null;
     
     // Only update account balance if account_id is valid
-    if (validAccountId) {
-      await updateAccountBalance(validAccountId, transactionData.amount);
+    if (accountId && accountId.trim() !== '') {
+      await updateAccountBalance(accountId, transactionData.amount);
     }
     
     return data[0];
