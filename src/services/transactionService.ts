@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Transaction } from "@/types/finance";
 import { toast } from "@/components/ui/use-toast";
@@ -39,7 +38,7 @@ export const addTransaction = async (transaction: Omit<Transaction, "id" | "user
     // Fix the null check to avoid TypeScript error
     if (transactionData.account_id === null || 
         transactionData.account_id === undefined || 
-        (typeof transactionData.account_id === 'object' && transactionData.account_id !== null && !('toString' in transactionData.account_id))) {
+        transactionData.account_id === '') {
       delete transactionData.account_id;
     }
     
@@ -61,13 +60,10 @@ export const addTransaction = async (transaction: Omit<Transaction, "id" | "user
     }
 
     // Safe type checking and handling for account_id
-    if (transactionData.account_id) {
+    const accountId = transactionData.account_id;
+    if (accountId && typeof accountId === 'string' && accountId.trim() !== '') {
       try {
-        // TypeScript safety check: ensure account_id is non-null before using it
-        const accountId = transactionData.account_id ? String(transactionData.account_id) : null;
-        if (accountId && accountId.trim() !== '') {
-          await updateAccountBalance(accountId, transactionData.amount);
-        }
+        await updateAccountBalance(accountId, transactionData.amount);
       } catch (err) {
         console.error("Erro ao atualizar saldo da conta:", err);
       }
