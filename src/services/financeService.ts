@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Transaction, Category, Account } from "@/types/finance";
 import { toast } from "@/components/ui/use-toast";
@@ -34,9 +35,9 @@ export const addTransaction = async (transaction: Omit<Transaction, "id" | "user
     
     // Remova o account_id se for undefined ou null para evitar erros
     const transactionData = { ...transaction };
-    if (transactionData.account_id && 
-        (transactionData.account_id === undefined || 
-         typeof transactionData.account_id === 'object' && transactionData.account_id?._type === 'undefined')) {
+    if (!transactionData.account_id || 
+        transactionData.account_id === undefined || 
+        (typeof transactionData.account_id === 'object' && transactionData.account_id?._type === 'undefined')) {
       delete transactionData.account_id;
     }
     

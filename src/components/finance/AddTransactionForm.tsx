@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
@@ -27,6 +28,7 @@ import { z } from "zod";
 import { v4 as uuidv4 } from 'uuid';
 import { addTransaction, fetchAccounts } from '@/services/financeService';
 import { useQuery } from '@tanstack/react-query';
+import { Transaction } from '@/types/finance';
 
 const formSchema = z.object({
   description: z.string().min(3, "A descrição precisa ter pelo menos 3 caracteres"),
@@ -83,7 +85,7 @@ export function AddTransactionForm({ onAddTransaction }: AddTransactionFormProps
     try {
       const amount = parseFloat(data.amount);
       
-      const baseTransaction = {
+      const baseTransaction: Omit<Transaction, "id" | "user_id"> = {
         description: data.description,
         amount: data.type === "expense" ? -amount : amount,
         date: new Date(data.date).toISOString(),
@@ -92,7 +94,7 @@ export function AddTransactionForm({ onAddTransaction }: AddTransactionFormProps
         is_recurring: data.isRecurring,
         recurring_period: data.recurringPeriod,
         account_id: data.account_id,
-        payment_status: "pending"
+        payment_status: "pending" // Explicitly set to a valid enum value
       };
 
       if (data.isInstallment && data.installmentTotal) {
@@ -105,7 +107,7 @@ export function AddTransactionForm({ onAddTransaction }: AddTransactionFormProps
           const installmentDate = new Date(data.date);
           installmentDate.setMonth(installmentDate.getMonth() + i);
 
-          const installmentTransaction = {
+          const installmentTransaction: Omit<Transaction, "id" | "user_id"> = {
             ...baseTransaction,
             amount: data.type === "expense" ? -installmentAmount : installmentAmount,
             date: installmentDate.toISOString(),
