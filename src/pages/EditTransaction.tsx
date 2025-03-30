@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { ArrowLeft, Loader2 } from 'lucide-react';
@@ -25,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { fetchTransactions, updateTransaction, fetchCategories, fetchAccounts } from '@/services/financeService';
+import { updateTransaction, fetchCategories, fetchAccounts } from '@/services/financeService';
 import { useToast } from '@/components/ui/use-toast';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
