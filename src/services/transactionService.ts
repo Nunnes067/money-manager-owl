@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Transaction } from "@/types/finance";
 import { toast } from "@/components/ui/use-toast";
@@ -60,14 +61,14 @@ export const addTransaction = async (transaction: Omit<Transaction, "id" | "user
     }
 
     // Safe type checking and handling for account_id
-    if (transactionData.account_id && typeof transactionData.account_id !== 'undefined') {
-      // Convert account_id to string safely
-      const accountId = typeof transactionData.account_id === 'string' ? 
-        transactionData.account_id : 
-        String(transactionData.account_id);
-        
-      if (accountId && accountId.trim() !== '') {
-        await updateAccountBalance(accountId, transactionData.amount);
+    if (transactionData.account_id) {
+      try {
+        const accountId = String(transactionData.account_id);
+        if (accountId.trim() !== '') {
+          await updateAccountBalance(accountId, transactionData.amount);
+        }
+      } catch (err) {
+        console.error("Erro ao atualizar saldo da conta:", err);
       }
     }
     
