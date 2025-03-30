@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
@@ -26,6 +25,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { v4 as uuidv4 } from 'uuid';
+import { addTransaction, fetchAccounts } from '@/services/financeService';
+import { useQuery } from '@tanstack/react-query';
 
 const formSchema = z.object({
   description: z.string().min(3, "A descrição precisa ter pelo menos 3 caracteres"),
@@ -34,6 +35,7 @@ const formSchema = z.object({
   }),
   type: z.enum(["income", "expense"]),
   category: z.string().optional(),
+  account_id: z.string().optional(),
   isRecurring: z.boolean().default(false),
   recurringPeriod: z.enum(["daily", "weekly", "monthly", "yearly"]).optional(),
   isInstallment: z.boolean().default(false),
@@ -50,6 +52,12 @@ interface AddTransactionFormProps {
 export function AddTransactionForm({ onAddTransaction }: AddTransactionFormProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
+  
+  const { data: accounts = [], isLoading: loadingAccounts } = useQuery({
+    queryKey: ['accounts'],
+    queryFn: fetchAccounts
+  });
+  
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -72,25 +80,28 @@ export function AddTransactionForm({ onAddTransaction }: AddTransactionFormProps
     expense: ["Alimentação", "Moradia", "Transporte", "Lazer", "Saúde", "Educação", "Outros"],
   };
 
-  const onSubmit = (data: FormValues) => {
+  const onSubmit = async (data: FormValues) => {
     try {
       const amount = parseFloat(data.amount);
+      
       const baseTransaction = {
-        id: uuidv4(),
         description: data.description,
         amount: data.type === "expense" ? -amount : amount,
         date: new Date(data.date),
         type: data.type,
         category: data.category,
-        isRecurring: data.isRecurring,
-        recurringPeriod: data.recurringPeriod,
-        installment: null,
+        is_recurring: data.isRecurring,
+        recurring_period: data.recurringPeriod,
+        account_id: data.account_id,
+        payment_status: "pending"
       };
 
       if (data.isInstallment && data.installmentTotal) {
         const totalInstallments = parseInt(data.installmentTotal);
         const installmentAmount = amount / totalInstallments;
 
+        let successCount = 0;
+        
         // Create transactions for each installment
         for (let i = 0; i < totalInstallments; i++) {
           const installmentDate = new Date(data.date);
@@ -98,26 +109,38 @@ export function AddTransactionForm({ onAddTransaction }: AddTransactionFormProps
 
           const installmentTransaction = {
             ...baseTransaction,
-            id: uuidv4(),
             amount: data.type === "expense" ? -installmentAmount : installmentAmount,
             date: installmentDate,
-            installment: {
-              current: i + 1,
-              total: totalInstallments,
-            },
+            installment_current: i + 1,
+            installment_total: totalInstallments,
           };
 
-          onAddTransaction(installmentTransaction);
+          const result = await addTransaction(installmentTransaction);
+          if (result) {
+            successCount++;
+            onAddTransaction(result);
+          }
         }
+        
+        toast({
+          title: "Transações adicionadas",
+          description: `${successCount} de ${totalInstallments} parcelas foram adicionadas com sucesso`,
+        });
       } else {
         // Add a single transaction
-        onAddTransaction(baseTransaction);
+        const result = await addTransaction(baseTransaction);
+        
+        if (result) {
+          onAddTransaction(result);
+          
+          toast({
+            title: "Transação adicionada",
+            description: "Sua transação foi adicionada com sucesso",
+          });
+        } else {
+          throw new Error("Falha ao adicionar a transação");
+        }
       }
-
-      toast({
-        title: "Transação adicionada",
-        description: "Sua transação foi adicionada com sucesso",
-      });
 
       navigate("/");
     } catch (error) {
@@ -188,6 +211,37 @@ export function AddTransactionForm({ onAddTransaction }: AddTransactionFormProps
                   </Button>
                 </div>
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="account_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Conta</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma conta" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {loadingAccounts ? (
+                    <SelectItem value="loading" disabled>Carregando...</SelectItem>
+                  ) : accounts.length === 0 ? (
+                    <SelectItem value="no-accounts" disabled>Nenhuma conta disponível</SelectItem>
+                  ) : (
+                    accounts.map((account: any) => (
+                      <SelectItem key={account.id} value={account.id}>
+                        {account.name} (R$ {account.balance.toFixed(2)})
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Transaction, Category, Account } from "@/types/finance";
 import { toast } from "@/components/ui/use-toast";
@@ -37,14 +36,15 @@ export const addTransaction = async (transaction: Omit<Transaction, "id" | "user
     const transactionData = { ...transaction };
     if (transactionData.account_id && 
         (transactionData.account_id === undefined || 
-         typeof transactionData.account_id === 'object' && transactionData.account_id._type === 'undefined')) {
+         typeof transactionData.account_id === 'object' && transactionData.account_id?._type === 'undefined')) {
       delete transactionData.account_id;
     }
     
     const transactionForSupabase = {
       ...transactionData,
       date: typeof transactionData.date === 'object' ? 
-        (transactionData.date as Date).toISOString() : transactionData.date
+        (transactionData.date as Date).toISOString() : transactionData.date,
+      user_id: (await supabase.auth.getUser()).data.user?.id
     };
 
     const { data, error } = await supabase
@@ -138,8 +138,7 @@ export const deleteTransaction = async (id: string) => {
       .eq("id", id)
       .single();
     
-    // Cast transaction to Transaction type with account_id
-    const transactionWithAccount = transaction as Transaction & { account_id?: string };
+    const transactionWithAccount = transaction as Transaction;
     
     const { error } = await supabase
       .from("transactions")
@@ -166,26 +165,37 @@ export const deleteTransaction = async (id: string) => {
   }
 };
 
-// Nova função para atualizar o saldo da conta
 const updateAccountBalance = async (accountId: string, amountChange: number) => {
   try {
+    console.log(`Atualizando saldo da conta ${accountId} com valor ${amountChange}`);
+    
     const { data: account, error: fetchError } = await supabase
       .from("accounts")
       .select("balance")
       .eq("id", accountId)
       .single();
     
-    if (fetchError) throw fetchError;
+    if (fetchError) {
+      console.error("Erro ao buscar conta:", fetchError);
+      throw fetchError;
+    }
     
-    const newBalance = (account.balance || 0) + amountChange;
+    const currentBalance = account?.balance || 0;
+    const newBalance = currentBalance + amountChange;
+    
+    console.log(`Saldo atual: ${currentBalance}, Novo saldo: ${newBalance}`);
     
     const { error: updateError } = await supabase
       .from("accounts")
       .update({ balance: newBalance })
       .eq("id", accountId);
     
-    if (updateError) throw updateError;
+    if (updateError) {
+      console.error("Erro ao atualizar saldo:", updateError);
+      throw updateError;
+    }
     
+    console.log(`Saldo atualizado com sucesso para: ${newBalance}`);
     return true;
   } catch (error) {
     console.error("Erro ao atualizar saldo da conta:", error);
@@ -276,9 +286,17 @@ export const deleteCategory = async (id: string) => {
 
 export const fetchAccounts = async () => {
   try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      console.warn("Usuário não autenticado, não é possível carregar contas");
+      return [];
+    }
+    
     const { data, error } = await supabase
       .from("accounts")
       .select("*")
+      .eq("user_id", user.id)
       .order("name");
 
     if (error) throw error;
@@ -299,10 +317,15 @@ export const addAccount = async (account: Omit<Account, "id" | "user_id">) => {
   try {
     console.log("Adicionando conta:", account);
     
-    // Add the user_id field to the account
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error("Usuário não autenticado");
+    }
+    
     const accountData = {
       ...account,
-      user_id: (await supabase.auth.getUser()).data.user?.id
+      user_id: user.id
     };
     
     const { data, error } = await supabase
@@ -321,7 +344,7 @@ export const addAccount = async (account: Omit<Account, "id" | "user_id">) => {
     console.error("Erro ao adicionar conta:", error.message);
     toast({
       title: "Erro",
-      description: "Não foi possível adicionar a conta",
+      description: "Não foi possível adicionar a conta: " + error.message,
       variant: "destructive",
     });
     return null;
