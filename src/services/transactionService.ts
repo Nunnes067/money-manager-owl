@@ -63,8 +63,9 @@ export const addTransaction = async (transaction: Omit<Transaction, "id" | "user
     // Safe type checking and handling for account_id
     if (transactionData.account_id) {
       try {
-        const accountId = String(transactionData.account_id);
-        if (accountId.trim() !== '') {
+        // TypeScript safety check: ensure account_id is non-null before using it
+        const accountId = transactionData.account_id ? String(transactionData.account_id) : null;
+        if (accountId && accountId.trim() !== '') {
           await updateAccountBalance(accountId, transactionData.amount);
         }
       } catch (err) {
