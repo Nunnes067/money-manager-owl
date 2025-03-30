@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Transaction, Category, Account } from "@/types/finance";
 import { toast } from "@/components/ui/use-toast";
@@ -34,9 +35,10 @@ export const addTransaction = async (transaction: Omit<Transaction, "id" | "user
     
     const transactionData = { ...transaction };
     
+    // Fix the null check to avoid TypeScript error
     if (transactionData.account_id === null || 
         transactionData.account_id === undefined || 
-        (typeof transactionData.account_id === 'object' && 'toString' in transactionData.account_id === false)) {
+        (typeof transactionData.account_id === 'object' && transactionData.account_id !== null && !('toString' in transactionData.account_id))) {
       delete transactionData.account_id;
     }
     
