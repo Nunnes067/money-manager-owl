@@ -59,11 +59,11 @@ export const addTransaction = async (transaction: Omit<Transaction, "id" | "user
       throw error;
     }
 
-    // First check if account_id exists before trying to use toString()
-    // This properly addresses the TypeScript error
+    // Check if account_id exists and is valid before calling toString()
     if (transactionData.account_id !== null && transactionData.account_id !== undefined) {
-      const accountId = transactionData.account_id.toString();
-      if (accountId.trim() !== '') {
+      // Store in a separate variable to avoid TypeScript errors
+      const accountId = String(transactionData.account_id);
+      if (accountId && accountId.trim() !== '') {
         await updateAccountBalance(accountId, transactionData.amount);
       }
     }
