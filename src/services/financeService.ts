@@ -32,7 +32,7 @@ export const addTransaction = async (transaction: Omit<Transaction, "id" | "user
   try {
     console.log("Adicionando transação:", transaction);
     
-    // Remova o account_id se for undefined para evitar erros
+    // Remova o account_id se for undefined ou null para evitar erros
     const transactionData = { ...transaction };
     if (transactionData.account_id && 
         (transactionData.account_id === undefined || 

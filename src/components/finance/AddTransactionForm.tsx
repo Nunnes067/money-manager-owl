@@ -74,7 +74,6 @@ export function AddTransactionForm({ onAddTransaction }: AddTransactionFormProps
   const watchIsInstallment = form.watch("isInstallment");
   const watchType = form.watch("type");
 
-  // Example categories (can be expanded or moved to a prop/context)
   const categories = {
     income: ["Salário", "Freelance", "Investimentos", "Outros"],
     expense: ["Alimentação", "Moradia", "Transporte", "Lazer", "Saúde", "Educação", "Outros"],
@@ -87,7 +86,7 @@ export function AddTransactionForm({ onAddTransaction }: AddTransactionFormProps
       const baseTransaction = {
         description: data.description,
         amount: data.type === "expense" ? -amount : amount,
-        date: new Date(data.date),
+        date: new Date(data.date).toISOString(),
         type: data.type,
         category: data.category,
         is_recurring: data.isRecurring,
@@ -102,7 +101,6 @@ export function AddTransactionForm({ onAddTransaction }: AddTransactionFormProps
 
         let successCount = 0;
         
-        // Create transactions for each installment
         for (let i = 0; i < totalInstallments; i++) {
           const installmentDate = new Date(data.date);
           installmentDate.setMonth(installmentDate.getMonth() + i);
@@ -110,7 +108,7 @@ export function AddTransactionForm({ onAddTransaction }: AddTransactionFormProps
           const installmentTransaction = {
             ...baseTransaction,
             amount: data.type === "expense" ? -installmentAmount : installmentAmount,
-            date: installmentDate,
+            date: installmentDate.toISOString(),
             installment_current: i + 1,
             installment_total: totalInstallments,
           };
@@ -127,7 +125,6 @@ export function AddTransactionForm({ onAddTransaction }: AddTransactionFormProps
           description: `${successCount} de ${totalInstallments} parcelas foram adicionadas com sucesso`,
         });
       } else {
-        // Add a single transaction
         const result = await addTransaction(baseTransaction);
         
         if (result) {
