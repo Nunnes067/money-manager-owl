@@ -59,9 +59,16 @@ export const addTransaction = async (transaction: Omit<Transaction, "id" | "user
       throw error;
     }
     
-    // Check if account_id exists and is a valid string before updating account balance
-    if (transactionData.account_id && typeof transactionData.account_id === 'string' && transactionData.account_id.trim() !== '') {
-      await updateAccountBalance(transactionData.account_id, transactionData.amount);
+    // Store account_id in a separate variable after validation to avoid TypeScript error
+    const validAccountId = transactionData.account_id && 
+      typeof transactionData.account_id === 'string' && 
+      transactionData.account_id.trim() !== '' 
+      ? transactionData.account_id 
+      : null;
+    
+    // Only update account balance if account_id is valid
+    if (validAccountId) {
+      await updateAccountBalance(validAccountId, transactionData.amount);
     }
     
     return data[0];
