@@ -159,6 +159,36 @@ export type Database = {
           },
         ]
       }
+      clients: {
+        Row: {
+          contact: string
+          created_at: string
+          id: string
+          name: string
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          contact: string
+          created_at?: string
+          id?: string
+          name: string
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          contact?: string
+          created_at?: string
+          id?: string
+          name?: string
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       company_profiles: {
         Row: {
           address: string | null
@@ -214,6 +244,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      dashboards: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          imageurl: string
+          isfavorite: boolean | null
+          lastupdated: string | null
+          title: string
+          url: string | null
+          views: number | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          imageurl: string
+          isfavorite?: boolean | null
+          lastupdated?: string | null
+          title: string
+          url?: string | null
+          views?: number | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          imageurl?: string
+          isfavorite?: boolean | null
+          lastupdated?: string | null
+          title?: string
+          url?: string | null
+          views?: number | null
+        }
+        Relationships: []
       }
       freelancer_profiles: {
         Row: {
@@ -336,6 +405,44 @@ export type Database = {
           },
         ]
       }
+      installments: {
+        Row: {
+          amount: number
+          created_at: string
+          due_date: string
+          id: string
+          loan_id: string
+          payment_date: string | null
+          status: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          due_date: string
+          id?: string
+          loan_id: string
+          payment_date?: string | null
+          status?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          due_date?: string
+          id?: string
+          loan_id?: string
+          payment_date?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "installments_loan_id_fkey"
+            columns: ["loan_id"]
+            isOneToOne: false
+            referencedRelation: "loans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_categories: {
         Row: {
           created_at: string | null
@@ -430,6 +537,82 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loans: {
+        Row: {
+          amount: number
+          client_id: string
+          created_at: string
+          id: string
+          interest_rate: number
+          status: string
+          term: number
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          client_id: string
+          created_at?: string
+          id?: string
+          interest_rate: number
+          status?: string
+          term: number
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          client_id?: string
+          created_at?: string
+          id?: string
+          interest_rate?: number
+          status?: string
+          term?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loans_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          id: string
+          installment_id: string
+          payment_date: string
+          payment_method: string
+          transaction_id: string | null
+        }
+        Insert: {
+          amount: number
+          id?: string
+          installment_id: string
+          payment_date?: string
+          payment_method: string
+          transaction_id?: string | null
+        }
+        Update: {
+          amount?: number
+          id?: string
+          installment_id?: string
+          payment_date?: string
+          payment_method?: string
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_installment_id_fkey"
+            columns: ["installment_id"]
+            isOneToOne: false
+            referencedRelation: "installments"
             referencedColumns: ["id"]
           },
         ]

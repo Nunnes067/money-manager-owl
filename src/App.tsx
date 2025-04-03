@@ -5,6 +5,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AddTransaction from "./pages/AddTransaction";
@@ -14,6 +16,9 @@ import Settings from "./pages/Settings";
 import Planning from "./pages/Planning";
 import EditTransaction from "./pages/EditTransaction";
 import AddAccount from "./pages/AddAccount";
+import Auth from "./pages/Auth";
+import Profile from "./pages/Profile";
+import Admin from "./pages/Admin";
 
 // Create a client with specific configuration
 const queryClient = new QueryClient({
@@ -31,21 +36,72 @@ const App: React.FC = () => {
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/add-transaction" element={<AddTransaction />} />
-              <Route path="/edit-transaction/:id" element={<EditTransaction />} />
-              <Route path="/accounts" element={<Accounts />} />
-              <Route path="/add-account" element={<AddAccount />} />
-              <Route path="/reports" element={<Reports />} />
-              <Route path="/planning" element={<Planning />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </TooltipProvider>
+          <AuthProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <Routes>
+                {/* Public route */}
+                <Route path="/auth" element={<Auth />} />
+                
+                {/* Protected routes */}
+                <Route path="/" element={
+                  <ProtectedRoute>
+                    <Index />
+                  </ProtectedRoute>
+                } />
+                <Route path="/add-transaction" element={
+                  <ProtectedRoute>
+                    <AddTransaction />
+                  </ProtectedRoute>
+                } />
+                <Route path="/edit-transaction/:id" element={
+                  <ProtectedRoute>
+                    <EditTransaction />
+                  </ProtectedRoute>
+                } />
+                <Route path="/accounts" element={
+                  <ProtectedRoute>
+                    <Accounts />
+                  </ProtectedRoute>
+                } />
+                <Route path="/add-account" element={
+                  <ProtectedRoute>
+                    <AddAccount />
+                  </ProtectedRoute>
+                } />
+                <Route path="/reports" element={
+                  <ProtectedRoute>
+                    <Reports />
+                  </ProtectedRoute>
+                } />
+                <Route path="/planning" element={
+                  <ProtectedRoute>
+                    <Planning />
+                  </ProtectedRoute>
+                } />
+                <Route path="/settings" element={
+                  <ProtectedRoute>
+                    <Settings />
+                  </ProtectedRoute>
+                } />
+                <Route path="/profile" element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                } />
+                
+                {/* Admin route */}
+                <Route path="/admin" element={
+                  <ProtectedRoute requireAdmin>
+                    <Admin />
+                  </ProtectedRoute>
+                } />
+                
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </TooltipProvider>
+          </AuthProvider>
         </BrowserRouter>
       </QueryClientProvider>
     </React.StrictMode>

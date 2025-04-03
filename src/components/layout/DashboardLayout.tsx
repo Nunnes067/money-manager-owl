@@ -1,9 +1,11 @@
+
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Wallet, PieChart, Settings, Plus, DollarSign, CreditCard, BarChart4, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate, useLocation, NavigateFunction } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { UserMenuDropdown } from './UserMenuDropdown';
 
 interface NavItemProps {
   icon: React.ReactNode;
@@ -117,6 +119,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
       {/* Main content */}
       <main className="flex-1 flex flex-col overflow-hidden">
+        {/* Header with user menu */}
+        <header className="border-b p-4 flex justify-end items-center">
+          <UserMenuDropdown />
+        </header>
         <div className="flex-1 overflow-auto p-4 pb-20 md:pb-4">
           {children}
         </div>
