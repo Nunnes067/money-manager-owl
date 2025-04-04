@@ -41,7 +41,7 @@ export function UserProposals() {
       
       if (error) throw error;
       
-      setProposals(data || []);
+      setProposals(data as Proposal[] || []);
     } catch (error: any) {
       console.error('Error fetching proposals:', error);
       toast({

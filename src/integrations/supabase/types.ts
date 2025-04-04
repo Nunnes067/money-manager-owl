@@ -40,7 +40,15 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "accounts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users_view"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       applications: {
         Row: {
@@ -115,7 +123,15 @@ export type Database = {
           name?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "categories_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users_view"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       check_ins: {
         Row: {
@@ -187,7 +203,15 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "clients_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users_view"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       company_profiles: {
         Row: {
@@ -789,7 +813,63 @@ export type Database = {
           updated_at?: string | null
           user_type?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "users_view"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proposals: {
+        Row: {
+          admin_id: string
+          created_at: string
+          description: string
+          id: string
+          payment_link: string
+          status: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          admin_id: string
+          created_at?: string
+          description: string
+          id?: string
+          payment_link: string
+          status?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          admin_id?: string
+          created_at?: string
+          description?: string
+          id?: string
+          payment_link?: string
+          status?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposals_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "users_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposals_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users_view"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       recurring_transactions: {
         Row: {
@@ -846,7 +926,15 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "recurring_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users_view"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reviews: {
         Row: {
@@ -946,11 +1034,33 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users_view"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
-      [_ in never]: never
+      users_view: {
+        Row: {
+          email: string | null
+          id: string | null
+        }
+        Insert: {
+          email?: string | null
+          id?: string | null
+        }
+        Update: {
+          email?: string | null
+          id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       nearby_jobs: {
