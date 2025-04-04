@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -19,8 +18,8 @@ import AddAccount from "./pages/AddAccount";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
+import UserManagement from "./pages/UserManagement";
 
-// Create a client with specific configuration
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -91,10 +90,15 @@ const App: React.FC = () => {
                   </ProtectedRoute>
                 } />
                 
-                {/* Admin route */}
+                {/* Admin routes */}
                 <Route path="/admin" element={
                   <ProtectedRoute requireAdmin>
                     <Admin />
+                  </ProtectedRoute>
+                } />
+                <Route path="/user-management" element={
+                  <ProtectedRoute requireAdmin>
+                    <UserManagement />
                   </ProtectedRoute>
                 } />
                 

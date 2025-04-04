@@ -1,14 +1,15 @@
-
 import React from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { Users } from 'lucide-react';
 
 export default function Admin() {
   const { isAdmin } = useAuth();
+  const navigate = useNavigate();
   
   // Redirect if not an admin
   if (!isAdmin) {
@@ -32,14 +33,17 @@ export default function Admin() {
               <CardHeader>
                 <CardTitle>User Management</CardTitle>
                 <CardDescription>
-                  View and manage all users in the system.
+                  View and manage all users in the system. Send payment proposals.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground mb-4">
-                  This section allows administrators to view and manage user accounts.
+                  This section allows administrators to view user accounts and send payment proposals.
                 </p>
-                <Button>View All Users</Button>
+                <Button onClick={() => navigate('/user-management')}>
+                  <Users className="mr-2 h-4 w-4" />
+                  Manage Users &amp; Proposals
+                </Button>
               </CardContent>
             </Card>
           </TabsContent>

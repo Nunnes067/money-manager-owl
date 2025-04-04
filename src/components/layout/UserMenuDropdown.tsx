@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
-import { User, Settings, LogOut } from "lucide-react";
+import { User, Settings, LogOut, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -61,6 +61,10 @@ export function UserMenuDropdown() {
             <DropdownMenuItem onClick={() => navigate("/admin")}>
               <User className="mr-2 h-4 w-4" />
               Admin Dashboard
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate("/user-management")}>
+              <Users className="mr-2 h-4 w-4" />
+              User Management
             </DropdownMenuItem>
           </>
         )}

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from 'react';
 import { Transaction, BalanceSummary, FinancialAlert } from '@/types/finance';
 import DashboardLayout from '@/components/layout/DashboardLayout';
@@ -21,6 +20,7 @@ import { Progress } from '@/components/ui/progress';
 import { format, isAfter, isBefore, parseISO, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from '@/components/ui/use-toast';
+import { UserProposals } from '@/components/proposal/UserProposals';
 
 const Index = () => {
   const [balanceSummary, setBalanceSummary] = useState<BalanceSummary>({
@@ -38,19 +38,16 @@ const Index = () => {
     queryFn: fetchTransactions
   });
 
-  // Calcular alertas financeiros com base nas transações
   useEffect(() => {
     if (transactions.length) {
       const now = new Date();
       const sevenDaysLater = addDays(now, 7);
       const newAlerts: FinancialAlert[] = [];
       
-      // Encontrar transações próximas do vencimento
       transactions.forEach((transaction: Transaction) => {
         if (transaction.type === 'expense' && transaction.due_date) {
           const dueDate = parseISO(transaction.due_date);
           
-          // Alertas para contas vencidas
           if (isBefore(dueDate, now) && transaction.payment_status !== 'paid') {
             newAlerts.push({
               id: `overdue-${transaction.id}`,
@@ -61,7 +58,6 @@ const Index = () => {
               isRead: false
             });
           } 
-          // Alertas para contas próximas do vencimento
           else if (
             isAfter(dueDate, now) && 
             isBefore(dueDate, sevenDaysLater) && 
@@ -81,7 +77,6 @@ const Index = () => {
       
       setAlerts(newAlerts);
       
-      // Notificar usuário se houver alertas importantes
       if (newAlerts.some(alert => alert.type === 'danger')) {
         toast({
           title: "Atenção às suas finanças!",
@@ -92,7 +87,6 @@ const Index = () => {
     }
   }, [transactions]);
 
-  // Atualizar resumo de saldo quando as transações forem carregadas
   useEffect(() => {
     if (transactions.length) {
       const summary = transactions.reduce((acc: BalanceSummary, transaction: any) => {
@@ -104,7 +98,6 @@ const Index = () => {
         } else {
           acc.expenses += Math.abs(amount);
           
-          // Calcular despesas pendentes e atrasadas
           if (transaction.due_date && transaction.payment_status !== 'paid') {
             const dueDate = parseISO(transaction.due_date);
             if (isBefore(dueDate, now)) {
@@ -129,17 +122,14 @@ const Index = () => {
     }
   }, [transactions]);
 
-  // Filtrar transações por tipo
   const incomeTransactions = transactions.filter((t: any) => t.amount > 0);
   const expenseTransactions = transactions.filter((t: any) => t.amount < 0);
   
-  // Calcular previsão para o fim do mês
   const monthEndForecast = useMemo(() => {
     const today = new Date();
     const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
     
-    // Calcular receitas esperadas para este mês baseado nas transações recorrentes
     const expectedIncome = transactions
       .filter((t: Transaction) => 
         t.amount > 0 && 
@@ -149,7 +139,6 @@ const Index = () => {
       )
       .reduce((sum: number, t: Transaction) => sum + t.amount, 0);
     
-    // Calcular despesas esperadas para este mês
     const expectedExpenses = transactions
       .filter((t: Transaction) => 
         t.amount < 0 && 
@@ -160,7 +149,6 @@ const Index = () => {
       )
       .reduce((sum: number, t: Transaction) => sum + Math.abs(t.amount), 0);
     
-    // Previsão para o final do mês
     const expectedBalance = balanceSummary.totalBalance + expectedIncome - expectedExpenses;
     
     return {
@@ -194,12 +182,17 @@ const Index = () => {
 
   return (
     <DashboardLayout>
-      <div className="max-w-5xl mx-auto space-y-6 px-4">
-        <div className="mb-6 relative">
+      <div className="container pb-16">
+        <h1 className="text-3xl font-bold mb-6">Finanças</h1>
+        
+        <div className="mb-8">
+          <UserProposals />
+        </div>
+        
+        <div className="mb-8">
           <BalanceCard balanceSummary={balanceSummary} />
         </div>
         
-        {/* Alertas Financeiros */}
         {alerts.length > 0 && (
           <div className="mb-6">
             <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
@@ -230,7 +223,6 @@ const Index = () => {
           </div>
         )}
         
-        {/* Previsão Financeira */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <Card>
             <CardHeader className="pb-2">
@@ -284,7 +276,6 @@ const Index = () => {
           </Card>
         </div>
         
-        {/* Meta de Economia */}
         <Card className="mb-6">
           <CardHeader className="pb-2">
             <CardTitle className="flex justify-between items-center">
@@ -305,7 +296,6 @@ const Index = () => {
           </CardFooter>
         </Card>
         
-        {/* Lista de Transações */}
         <Tabs defaultValue="all">
           <TabsList className="grid grid-cols-3 mb-4">
             <TabsTrigger value="all">Todas</TabsTrigger>
@@ -335,7 +325,6 @@ const Index = () => {
           </TabsContent>
         </Tabs>
         
-        {/* Dicas de Economia */}
         <div className="mt-8">
           <h2 className="text-lg font-semibold mb-3">Dicas para Economizar</h2>
           <Card>
