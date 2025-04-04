@@ -760,6 +760,7 @@ export type Database = {
           id: string
           longest_streak: number | null
           name: string
+          role: string | null
           total_check_ins: number | null
           updated_at: string | null
           user_type: string
@@ -771,6 +772,7 @@ export type Database = {
           id: string
           longest_streak?: number | null
           name: string
+          role?: string | null
           total_check_ins?: number | null
           updated_at?: string | null
           user_type?: string
@@ -782,6 +784,7 @@ export type Database = {
           id?: string
           longest_streak?: number | null
           name?: string
+          role?: string | null
           total_check_ins?: number | null
           updated_at?: string | null
           user_type?: string
