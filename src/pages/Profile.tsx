@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export default function Profile() {
   const { user, profile } = useAuth();
-  const [username, setUsername] = useState(profile?.username || '');
+  const [name, setName] = useState(profile?.name || '');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -24,7 +24,7 @@ export default function Profile() {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ username })
+        .update({ name })
         .eq('id', user.id);
       
       if (error) throw error;
@@ -44,8 +44,8 @@ export default function Profile() {
     }
   };
 
-  const userInitials = profile?.username 
-    ? profile.username.substring(0, 2).toUpperCase()
+  const userInitials = profile?.name 
+    ? profile.name.substring(0, 2).toUpperCase()
     : user?.email?.substring(0, 2).toUpperCase() || 'U';
 
   return (
@@ -74,12 +74,12 @@ export default function Profile() {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
+                  <Label htmlFor="name">Name</Label>
                   <Input 
-                    id="username" 
-                    value={username} 
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Enter your username"
+                    id="name" 
+                    value={name} 
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Enter your name"
                   />
                 </div>
                 

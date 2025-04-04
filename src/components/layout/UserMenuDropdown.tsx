@@ -25,8 +25,8 @@ export function UserMenuDropdown() {
     );
   }
   
-  const userInitials = profile?.username 
-    ? profile.username.substring(0, 2).toUpperCase()
+  const userInitials = profile?.name 
+    ? profile.name.substring(0, 2).toUpperCase()
     : user.email?.substring(0, 2).toUpperCase() || 'U';
 
   return (
@@ -42,7 +42,7 @@ export function UserMenuDropdown() {
       <DropdownMenuContent className="w-56" align="end">
         <DropdownMenuLabel>
           <div className="flex flex-col">
-            <span>{profile?.username || user.email}</span>
+            <span>{profile?.name || user.email}</span>
             {isAdmin && <span className="text-xs text-primary">Administrator</span>}
           </div>
         </DropdownMenuLabel>

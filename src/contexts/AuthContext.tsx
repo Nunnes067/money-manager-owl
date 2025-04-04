@@ -6,9 +6,9 @@ import { useToast } from '@/hooks/use-toast';
 
 export type UserProfile = {
   id: string;
-  username?: string;
+  name?: string; // Using name instead of username to match the DB structure
   avatar_url?: string;
-  role?: string;
+  role?: string; // Added role property to match the database
 };
 
 type AuthContextType = {
@@ -82,6 +82,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       setProfile(data);
+      // Check if role exists before setting isAdmin
       setIsAdmin(data?.role === 'admin');
     } catch (error) {
       console.error('Error fetching profile:', error);
